@@ -6,16 +6,29 @@ const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [error, setError] = useState("");
 
   const todos = useSelector((state) => state.todos.items);
   const dispatch = useDispatch();
 
   const handleAddTodo = (e) => {
     e.preventDefault();
-    if (!newTodo.trim()) return;
+    const trimmedTodo = newTodo.trim();
+    if (!trimmedTodo) return;
 
-    dispatch(addTodo(newTodo.trim()));
+    const isDuplicate = todos.some(
+      (todo) => todo.text.toLowerCase() === trimmedTodo.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      setError("This todo already exists!");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    dispatch(addTodo(trimmedTodo));
     setNewTodo("");
+    setError("");
   };
 
   const handleToggleComplete = (id) => {
@@ -25,19 +38,35 @@ const TodoList = () => {
   const handleStartEdit = (todo) => {
     setEditId(todo.id);
     setEditText(todo.text);
+    setError("");
   };
 
   const handleSaveEdit = () => {
-    if (!editText.trim()) return;
+    const trimmedText = editText.trim();
+    if (!trimmedText) return;
 
-    dispatch(editTodo({ id: editId, text: editText.trim() }));
+    const isDuplicate = todos.some(
+      (todo) =>
+        todo.id !== editId &&
+        todo.text.toLowerCase() === trimmedText.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      setError("This todo already exists!");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    dispatch(editTodo({ id: editId, text: trimmedText }));
     setEditId(null);
     setEditText("");
+    setError("");
   };
 
   const handleCancelEdit = () => {
     setEditId(null);
     setEditText("");
+    setError("");
   };
 
   const handleDelete = (id) => {
@@ -51,20 +80,23 @@ const TodoList = () => {
           Todo List
         </h1>
 
-        <form onSubmit={handleAddTodo} className="mb-6 flex gap-2">
-          <input
-            type="text"
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            placeholder="Add a new todo..."
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Add
-          </button>
+        <form onSubmit={handleAddTodo} className="mb-6">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTodo}
+              onChange={(e) => setNewTodo(e.target.value)}
+              placeholder="Add a new todo..."
+              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Add
+            </button>
+          </div>
+          {error && <div className="mt-2 text-red-600 text-sm">{error}</div>}
         </form>
 
         <div className="space-y-3">
